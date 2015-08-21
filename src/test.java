@@ -22,7 +22,10 @@ public class test {
         "0100","0101","0110","0111",  
         "1000","1001","1010","1011",  
         "1100","1101","1110","1111"}; 
-	private static String colName = "BM_COL";
+	
+	
+	
+	private static String colName = "LO_SHIPMODE";
 	
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.jdbc.Driver");
@@ -35,11 +38,16 @@ public class test {
 		Statement ps2 = con2.createStatement();
 		Long begin = 0L;
 		int record_size = 1000;
+		Map<String, Integer> dic = genDic(con, ps2, colName);
+
 		while(true) {
 		ResultSet rs = ps.executeQuery("select LO_ORDERKEY, LO_LINENUMBER, LO_CUSTKEY, LO_ORDERDATE, " + colName + " from lineorder order by LO_ORDERKEY limit " + begin + "," + record_size);
 		boolean hasRecords = false;
 		
 		long count = begin;
+		int count2 = 1;
+		int aveLen = 0;
+		int totalLen = 0;
 		String ss = "";
 		int ii = 0;
 		int jj = 0;
@@ -59,8 +67,13 @@ public class test {
 				lns = "0" + lns;
 			
 			if(!op.equals(ss)) {
-				if(jj != 0)
+				if(jj != 0) {
 					ii += jj + 1;
+					totalLen += jj + 1;
+					aveLen = totalLen/count2;
+					
+					count2++;
+				}
 				jj = 0;
 				ss = op;
 			}
@@ -87,17 +100,16 @@ public class test {
 		
 		
 		double sr = (ii*1.0*100)/1000;
-		System.out.println("sequence rate:" + sr + "%");
+		System.out.println("sequence rate:" + sr + "%, average length:" + aveLen);
 		
-		if(sr > 20.0) {
+		if(sr > 20.0 && aveLen > 4) {
 			rle(ops, ps2, begin);
 		}
 		else {
-			if(opSet.size() < 20) {
+			if(opSet.size() < 4) {
 				bitMap(opSet, ps2, ops, begin);
 			}
 			else {
-				Map<String, Integer> dic = genDic(con, ps2);
 				dictionary(ops, dic, ps2, begin);
 			}
 		}
@@ -129,17 +141,17 @@ public class test {
 			ps2.execute("INSERT INTO lineorder(ID, LO_ORDERPRIOTITY, LENGTH) VALUES (" + id + ", '" + s + "', " + len + ")");
 	}
 	
-	private static Map<String, Integer> genDic(Connection con, Statement ps2) throws SQLException{
+	private static Map<String, Integer> genDic(Connection con, Statement ps2, String colName) throws SQLException{
 		Statement ps = con.createStatement();
-		ResultSet rs = ps.executeQuery("select DISTINCT (BINARY DIC_COL), DIC_COL from lineorder");
+		ResultSet rs = ps.executeQuery("select DISTINCT (BINARY " + colName + "), "+colName+" from lineorder");
 		
 		Map<String, Integer> dic = new HashMap<String, Integer>();
 		
 		int index = 1;
 		while(rs.next()) {
-			dic.put(rs.getString("DIC_COL"), index);
+			dic.put(rs.getString(colName), index);
 			index++;
-			String sql = "INSERT INTO dictionary(D_KEY, D_VALUE)VALUES('" + rs.getString("DIC_COL")+ "', " + index +")";
+			String sql = "INSERT INTO dictionary(D_KEY, D_VALUE)VALUES('" + rs.getString(colName)+ "', " + index +")";
 			System.out.println("insert dictionary sql:" + sql);
 			ps2.execute(sql);
 		}
