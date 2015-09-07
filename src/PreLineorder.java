@@ -56,6 +56,8 @@ public class PreLineorder {
 			if(!hasNext){				
 				return;
 			}
+			
+			begin+=record_size;
 		}
 	
 	}
