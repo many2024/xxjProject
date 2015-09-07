@@ -1,14 +1,20 @@
+import java.sql.SQLException;
+import java.util.Map;
+
 
 public class Main {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		// TODO Auto-generated method stub
 
-		Long a = 2015L;
-		Long b = 8L;
-		Long c = 7L;
+		PreDate preDate = new PreDate();		
+		Map<Integer, String> dateMap = preDate.pre();
 		
-		System.out.println(Long.toBinaryString(b));
+		PreCustomer preCustomer = new PreCustomer();
+		Map<Integer, String> customerMap = preCustomer.pre();
+		
+		PreLineorder preLineorder = new PreLineorder();
+		preLineorder.pre(dateMap, customerMap);
 	}
 
 }
